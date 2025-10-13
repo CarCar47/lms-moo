@@ -1,0 +1,69 @@
+# ============================================================================
+# Docker Ignore File for Moodle 5.1
+# MINIMAL EXCLUSIONS - Only build artifacts and dev files
+# DO NOT exclude Moodle source directories (cache/, vendor/, tests/, etc.)
+# ============================================================================
+
+# Git files (not needed in container)
+.git
+.gitignore
+.gitattributes
+.github/
+
+# IDE files (not needed in container)
+.vscode/
+.idea/
+*.sublime-*
+*.sublime-project
+*.sublime-workspace
+
+# OS files (not needed in container)
+.DS_Store
+.AppleDouble
+.LSOverride
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# Build logs (not needed in container)
+*.log
+build.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Docker/Cloud Build files (not needed in container)
+.dockerignore
+.gcloudignore
+Dockerfile.old
+Dockerfile.custom.backup
+cloudbuild.yaml.backup
+docker-compose.yml
+docker-compose.override.yml
+
+# Temporary editor files (not needed in container)
+*.swp
+*.swo
+*~
+*.tmp
+*.temp
+
+# Workspace files (not needed in container)
+*.workspace
+*.code-workspace
+
+# IMPORTANT: DO NOT EXCLUDE THESE (Moodle needs them):
+# - cache/ (Moodle cache system - REQUIRED)
+# - vendor/ (Composer dependencies - may be needed)
+# - tests/ (PHPUnit tests - may be needed for diagnostics)
+# - public/ (Web-accessible files - REQUIRED)
+# - admin/ (Admin interface - REQUIRED)
+# - *.md files (may contain important docs)
+# - composer.json/composer.lock (Moodle 5.1 structure - REQUIRED)
+
+# Keep moodledata out (should be mounted from Cloud Storage)
+moodledata/
+
+# ============================================================================
+# End of minimal .dockerignore
+# ============================================================================

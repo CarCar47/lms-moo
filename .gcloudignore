@@ -1,0 +1,67 @@
+# ============================================================================
+# Cloud Build Ignore File for Moodle 5.1
+# MINIMAL EXCLUSIONS - Only build artifacts and dev files
+# DO NOT exclude Moodle source directories (cache/, vendor/, tests/, etc.)
+# ============================================================================
+
+# Git files (not needed for build)
+.git
+.gitignore
+.gitattributes
+.github/
+
+# IDE files (not needed for build)
+.vscode/
+.idea/
+*.sublime-*
+*.sublime-project
+*.sublime-workspace
+
+# OS files (not needed for build)
+.DS_Store
+.AppleDouble
+.LSOverride
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# Build logs (not needed for build)
+*.log
+build*.log
+
+# Temporary editor files (not needed for build)
+*.swp
+*.swo
+*~
+*.tmp
+*.temp
+
+# Docker/Cloud Build backup files (not needed for build)
+Dockerfile.old
+Dockerfile.custom.backup
+cloudbuild.yaml.backup
+
+# Workspace files (not needed for build)
+*.workspace
+*.code-workspace
+
+# IMPORTANT: DO NOT EXCLUDE THESE (Moodle needs them):
+# - cache/ (Moodle cache system - REQUIRED)
+# - vendor/ (Composer dependencies - may be needed)
+# - tests/ (PHPUnit tests - may be needed for diagnostics)
+# - public/ (Web-accessible files - REQUIRED)
+# - *.md files (may contain important docs)
+# - package.json/package-lock.json (may be needed)
+# - composer.json/composer.lock (Moodle 5.1 structure - REQUIRED)
+
+# Keep moodledata out (runtime directory, not needed in image)
+moodledata/
+
+# Keep these files (explicit includes)
+!Dockerfile
+!.dockerignore
+!cloudbuild.yaml
+
+# ============================================================================
+# End of minimal .gcloudignore
+# ============================================================================

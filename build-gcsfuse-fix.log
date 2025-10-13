@@ -1,0 +1,11 @@
+Creating temporary archive of 29551 file(s) totalling 299.2 MiB before compression.
+Uploading tarball of [.] to [gs://sms-edu-47_cloudbuild/source/1760306373.038078-ce347f4f89b640a8b9d2a68d97f4bfea.tgz]
+Created [https://cloudbuild.googleapis.com/v1/projects/sms-edu-47/locations/global/builds/7d9c9645-85fc-4817-9550-486037b3fc6a].
+Logs are available at [ https://console.cloud.google.com/cloud-build/builds/7d9c9645-85fc-4817-9550-486037b3fc6a?project=938209083489 ].
+
+gcloud builds submit only displays logs from Cloud Storage. To view logs from Cloud Logging, run:
+gcloud beta builds submit
+
+Waiting for build to complete. Polling interval: 1 second(s).
+ID                                    CREATE_TIME                DURATION  SOURCE                                                                                    IMAGES                                                                       STATUS
+7d9c9645-85fc-4817-9550-486037b3fc6a  2025-10-12T22:01:04+00:00  5M34S     gs://sms-edu-47_cloudbuild/source/1760306373.038078-ce347f4f89b640a8b9d2a68d97f4bfea.tgz  gcr.io/sms-edu-47/moodle-lms:7d9c9645-85fc-4817-9550-486037b3fc6a (+2 more)  SUCCESS
