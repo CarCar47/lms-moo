@@ -61,7 +61,7 @@ steps:
           --platform=managed \
           --region=us-central1 \
           --allow-unauthenticated \
-          --memory=1Gi \
+          --memory=2Gi \
           --cpu=1 \
           --timeout=300 \
           --max-instances=5 \
@@ -167,8 +167,8 @@ steps:
         echo "Configuration:   Ultra-Low-Cost"
         echo "Min Instances:   0 (cold starts enabled)"
         echo "Max Instances:   5"
-        echo "Memory:          1Gi"
-        echo "CPU:             1 vCPU"
+        echo "Memory:          2Gi"
+        echo "CPU:             2 vCPU"
         echo ""
         echo "Region:          us-central1"
         echo "Build ID:        $BUILD_ID"
@@ -207,7 +207,7 @@ options:
 substitutions:
   _REGION: 'us-central1'
   _SERVICE_NAME: 'moodle-lms'
-  _MEMORY: '1Gi'
+  _MEMORY: '2Gi'
   _CPU: '1'
   _MIN_INSTANCES: '0'
   _MAX_INSTANCES: '5'

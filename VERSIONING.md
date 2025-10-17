@@ -18,17 +18,18 @@ Configuration v2.0.0 → Moodle 5.2.0
 
 ## Moodle Core Versioning
 
-### Version Pinning Strategy
+### Source Code Version Control Strategy
 
-We pin to **Moodle stable branches** (not specific point releases):
+We include the **complete Moodle source code** in this repository:
 
-```dockerfile
-ENV MOODLE_VERSION=51  # Stable 5.1 branch
-ENV MOODLE_URL="https://download.moodle.org/download.php/direct/stable51/moodle-latest-51.tgz"
+```
+moodle-main/public/  ← Contains full Moodle 5.1 STABLE codebase
+Build: 20251006
+Source: MOODLE_501_STABLE branch
 ```
 
 **What this means:**
-- **5.1.0 → 5.1.1 → 5.1.2**: Automatic (security patches, bug fixes)
+- **5.1.0 → 5.1.1 → 5.1.2**: Manual update (pull updated source, commit, redeploy)
 - **5.1.x → 5.2.0**: Manual upgrade required (major features, breaking changes)
 
 ### Moodle Version Components
@@ -55,12 +56,12 @@ Moodle releases new versions twice per year:
 
 **LTS (Long-Term Support)**: Every third major version
 
-### Automatic Updates
+### Manual Updates
 
-Our configuration automatically gets:
-- ✅ Security patches (5.1.0 → 5.1.1)
-- ✅ Bug fixes (5.1.1 → 5.1.2)
-- ❌ Feature releases (5.1 → 5.2) - Manual upgrade required
+All Moodle updates require manual source code replacement:
+- ✅ Security patches (5.1.0 → 5.1.1) - Manual source update required
+- ✅ Bug fixes (5.1.1 → 5.1.2) - Manual source update required
+- ✅ Feature releases (5.1 → 5.2) - Manual upgrade required
 
 ---
 
@@ -111,16 +112,28 @@ v2.0.0 - Upgrade to Moodle 5.2 (Moodle 5.2.0)
 
 ### Minor Updates (5.1.x → 5.1.y)
 
-**Automatic** via version pinning:
+**Manual source code update** required:
 
 ```bash
-# Just redeploy - will fetch latest 5.1.x
-cd moodle-main
+# 1. Backup database
+gcloud sql backups create --instance=sms-edu-db --project=PROJECT_ID
+
+# 2. Pull updated Moodle source
+cd /tmp
+git clone --branch MOODLE_501_STABLE --depth 1 https://github.com/moodle/moodle.git
+
+# 3. Replace local source
+rm -rf moodle-main/public/*
+cp -r /tmp/moodle/* moodle-main/public/
+
+# 4. Commit and redeploy
+git add moodle-main/public/
+git commit -m "Update Moodle to 5.1.x security patch"
 gcloud builds submit --config cloudbuild.yaml --project=PROJECT_ID
 ```
 
 **What happens:**
-1. Dockerfile downloads latest stable51 (e.g., 5.1.2)
+1. Updated Moodle source copied into Docker image
 2. Cloud Build creates new image
 3. Cloud Run deploys new version
 4. Moodle auto-detects version change
@@ -128,7 +141,7 @@ gcloud builds submit --config cloudbuild.yaml --project=PROJECT_ID
 
 **Downtime**: ~30 seconds (during deployment)
 
-**Rollback**: Redeploy previous Cloud Run revision
+**Rollback**: Redeploy previous Cloud Run revision or restore from git
 
 ### Major Updates (5.1 → 5.2)
 
@@ -162,17 +175,23 @@ gsutil -m rsync -r \
 #### Step 3: Update Configuration
 
 ```bash
-# Update Dockerfile
-sed -i 's/MOODLE_VERSION=51/MOODLE_VERSION=52/' Dockerfile
+# Clone Moodle 5.2 STABLE source
+cd /tmp
+git clone --branch MOODLE_502_STABLE --depth 1 https://github.com/moodle/moodle.git
 
-# Update fallback in Cloud Storage
-gsutil cp moodle-5.2-stable.tgz \
-  gs://sms-edu-47-backups/moodle/
+# Replace local source
+rm -rf moodle-main/public/*
+cp -r /tmp/moodle/* moodle-main/public/
 
-# Update CHANGELOG.md
+# Update version references in documentation
+# - Dockerfile labels
+# - README.md
+# - CHANGELOG.md
+# - VERSIONING.md (this file)
+
 # Commit changes
-git add Dockerfile CHANGELOG.md
-git commit -m "Upgrade to Moodle 5.2"
+git add moodle-main/public/ Dockerfile README.md CHANGELOG.md VERSIONING.md
+git commit -m "Upgrade to Moodle 5.2 STABLE"
 git tag -a v2.0.0 -m "Major upgrade: Moodle 5.2"
 ```
 
@@ -292,7 +311,7 @@ Labels embedded in Docker image:
 ```dockerfile
 LABEL maintainer="COR4EDU Support <support@cor4edu.com>" \
       version="1.0" \
-      moodle.version="5.1dev" \
+      moodle.version="5.1 STABLE" \
       php.version="8.2" \
       base.image="moodlehq/moodle-php-apache:8.2"
 ```
@@ -449,6 +468,6 @@ View Moodle version:
 ---
 
 **Version**: 1.0.0
-**Moodle Version**: 5.1 (stable branch)
+**Moodle Version**: 5.1 STABLE (Build: 20251006)
 **Last Updated**: 2025-01-13
 **Status**: Active

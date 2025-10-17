@@ -178,7 +178,7 @@ gcloud builds submit \
 
 # Wait for deployment (8-12 minutes)
 # Cloud Build will:
-# 1. Download Moodle 5.1 (with fallback to Cloud Storage)
+# 1. Copy Moodle 5.1 STABLE source code from repository
 # 2. Build Docker image with moodlehq base
 # 3. Push to Container Registry
 # 4. Deploy to Cloud Run with volume mounts
@@ -593,18 +593,33 @@ gcloud run services describe moodle-lms --region=us-central1
 
 ### Moodle Updates
 
-**Minor updates (5.1.x)**: Automatic via version pinning
+**Minor updates (5.1.0 → 5.1.1 → 5.1.2)**: Manual source code update
 ```bash
-# Just redeploy - will fetch latest 5.1.x
+# 1. Backup database
+gcloud sql backups create --instance=sms-edu-db
+
+# 2. Pull updated Moodle source
+cd /tmp
+git clone --branch MOODLE_501_STABLE --depth 1 https://github.com/moodle/moodle.git
+
+# 3. Replace local source
+rm -rf moodle-main/public/*
+cp -r /tmp/moodle/* moodle-main/public/
+
+# 4. Commit and redeploy
+git add moodle-main/public/
+git commit -m "Update Moodle to 5.1.x security patch"
 gcloud builds submit --config cloudbuild.yaml
 ```
 
-**Major updates (5.2)**: Manual update required
+**Major updates (5.1 → 5.2)**: Manual upgrade required
 1. Backup database first
-2. Update `MOODLE_VERSION` in Dockerfile
-3. Test in staging
-4. Deploy to production
-5. Run Moodle upgrade wizard
+2. Clone Moodle 5.2 STABLE branch
+3. Replace local `moodle-main/public/` directory
+4. Update version references in Dockerfile and documentation
+5. Test in staging environment
+6. Deploy to production
+7. Run Moodle upgrade wizard
 
 ---
 
@@ -613,8 +628,8 @@ gcloud builds submit --config cloudbuild.yaml
 ### Current Configuration
 - Min instances: 0 (saves $$ when idle)
 - Max instances: 5
-- Memory: 1Gi
-- CPU: 1 vCPU
+- Memory: 2Gi
+- CPU: 2 vCPU
 
 ### Estimated Costs
 - Idle: ~$0.20/month

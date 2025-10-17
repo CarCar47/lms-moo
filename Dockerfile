@@ -1,8 +1,9 @@
 # ============================================================================
-# Moodle 5.1 Docker Image - Using Official Moodle HQ Base
+# Moodle 5.1 STABLE Docker Image - Using Official Moodle HQ Base
 # PHP 8.2 with Apache and ALL extensions pre-compiled
-# Optimized for Google Cloud Run with Cold Starts
-# Date: 2025-01-12
+# Optimized for Google Cloud Run
+# Moodle Version: 5.1 STABLE (Build: 20251006)
+# Date: 2025-10-06
 # ============================================================================
 #
 # Base: Official Moodle HQ PHP/Apache image with all required extensions
@@ -15,7 +16,7 @@
 # Use official Moodle HQ image - PHP 8.2 with all extensions pre-built
 FROM moodlehq/moodle-php-apache:8.2
 
-# Moodle 5.1 uses a new directory structure (Official Moodle Documentation):
+# Moodle 5.1 STABLE uses a new directory structure (Official Moodle Documentation):
 # All Moodle files go to /var/www/html/ (root, lib/, public/ subdirectory, etc.)
 # The public/ subdirectory contains web-accessible files
 # The moodlehq entrypoint automatically detects /var/www/html/public/ and configures Apache
@@ -31,34 +32,19 @@ FROM moodlehq/moodle-php-apache:8.2
 WORKDIR /var/www/html
 
 # ============================================================================
-# Install Moodle 5.1 Source Code
+# Install Moodle 5.1 STABLE Source Code
 # ============================================================================
 
-# Version pinning strategy: Download Moodle 5.1 stable branch
-# URL pattern locks to 5.1.x (gets patches, never jumps to 5.2)
-# Fallback to Cloud Storage if download.moodle.org is unavailable
+# Copy Moodle 5.1 STABLE source code from local directory
+# Source: Official Moodle repository MOODLE_501_STABLE branch
+# Release Date: October 6, 2025
+# Build: 20251006
+#
+# Note: Moodle source code is included in this repository.
+# This approach ensures consistent deployments and eliminates download failures.
+# The complete Moodle 5.1 STABLE codebase is copied into the Docker image.
 
-ENV MOODLE_VERSION=51
-ENV MOODLE_URL="https://download.moodle.org/download.php/direct/stable${MOODLE_VERSION}/moodle-latest-${MOODLE_VERSION}.tgz"
-ENV MOODLE_FALLBACK="gs://sms-edu-47-backups/moodle/moodle-5.1-stable.tgz"
-
-# Install gsutil for Cloud Storage fallback
-RUN apt-get update && apt-get install -y --no-install-recommends \
-        curl \
-        wget \
-        ca-certificates \
-    && apt-get clean \
-    && rm -rf /var/lib/apt/lists/*
-
-# Download and extract Moodle with fallback strategy
-RUN echo "Downloading Moodle 5.1..." \
-    && (wget -O /tmp/moodle.tgz "$MOODLE_URL" || \
-        (echo "Primary download failed, trying fallback..." && \
-         gsutil cp "$MOODLE_FALLBACK" /tmp/moodle.tgz)) \
-    && echo "Extracting Moodle..." \
-    && tar -xzf /tmp/moodle.tgz -C /var/www/html/ --strip-components=1 \
-    && rm /tmp/moodle.tgz \
-    && chown -R www-data:www-data /var/www/html/
+COPY --chown=www-data:www-data . /var/www/html/
 
 # Install Composer and generate vendor directory (required by Moodle 5.1)
 RUN apt-get update && apt-get install -y --no-install-recommends \
@@ -117,8 +103,8 @@ RUN echo '<?php header("Content-Type: application/json"); http_response_code(200
 
 LABEL maintainer="COR4EDU Support <support@cor4edu.com>" \
       version="1.0" \
-      description="Moodle 5.1 LMS for Google Cloud Run" \
-      moodle.version="5.1dev" \
+      description="Moodle 5.1 STABLE LMS for Google Cloud Run" \
+      moodle.version="5.1 STABLE" \
       php.version="8.2" \
       base.image="moodlehq/moodle-php-apache:8.2"
 

@@ -22,7 +22,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 Initial production release of COR4EDU Moodle LMS deployment configuration. Golden template ready for multi-tenant deployment to Google Cloud Platform.
 
 ### Moodle Core
-- **Version**: Moodle 5.1dev+ (Build: 20250919)
+- **Version**: Moodle 5.1 STABLE (Build: 20251006)
 - **PHP**: 8.2 via official moodlehq/moodle-php-apache base image
 - **Database**: MySQL 8.0 via Cloud SQL
 - **Storage**: Cloud Storage native volume mount for /moodledata
@@ -35,8 +35,8 @@ Initial production release of COR4EDU Moodle LMS deployment configuration. Golde
   - Auto-scaling (0-5 instances)
   - Min instances: 0 (cold starts enabled for cost savings)
   - Max instances: 5 (scales with demand)
-  - Memory: 1Gi
-  - CPU: 1 vCPU
+  - Memory: 2Gi
+  - CPU: 2 vCPU
   - Timeout: 300 seconds
 
 - **Cloud SQL Integration**:
@@ -69,16 +69,14 @@ Initial production release of COR4EDU Moodle LMS deployment configuration. Golde
   - Performance: opcache, apcu, redis, igbinary, memcached
   - Optional: ldap, bcmath, sockets
 
-**Version Pinning**:
-```dockerfile
-ENV MOODLE_VERSION=51
-ENV MOODLE_URL="https://download.moodle.org/download.php/direct/stable51/moodle-latest-51.tgz"
-ENV MOODLE_FALLBACK="gs://sms-edu-47-backups/moodle/moodle-5.1-stable.tgz"
-```
-- Locks to Moodle 5.1 stable branch
-- Automatically gets security patches (5.1.0 → 5.1.1 → 5.1.2)
-- Never jumps major versions without manual intervention
-- Fallback to Cloud Storage if download.moodle.org unavailable
+**Source Code Deployment**:
+- Moodle 5.1 STABLE source code is included in this repository
+- Source: Official Moodle repository MOODLE_501_STABLE branch (cloned October 6, 2025)
+- Build: 20251006
+- Docker build uses `COPY` to include complete Moodle codebase
+- This approach ensures consistent deployments and eliminates download failures
+- Version locked to Moodle 5.1 STABLE (no automatic upgrades)
+- Manual updates required for security patches and new versions
 
 **Directory Structure**:
 - Moodle core: `/var/www/html/`
@@ -117,7 +115,7 @@ ENV MOODLE_FALLBACK="gs://sms-edu-47-backups/moodle/moodle-5.1-stable.tgz"
 #### CI/CD Pipeline
 
 **Cloud Build Configuration** (`cloudbuild.yaml`):
-1. **Build Step**: Download Moodle 5.1 with fallback
+1. **Build Step**: Copy Moodle 5.1 STABLE source code from repository
 2. **Build Step**: Create Docker image with moodlehq base
 3. **Push Step**: Push to Container Registry with build ID tag
 4. **Push Step**: Push with 'latest' tag
@@ -168,9 +166,9 @@ ENV MOODLE_FALLBACK="gs://sms-edu-47-backups/moodle/moodle-5.1-stable.tgz"
 - Auto-configuration via installer or Bitnami entrypoint
 
 ### Changed
-- Updated from copying entire Moodle directory to downloading during build
-- Optimized Docker image size (~500MB vs potentially larger)
-- Improved build reliability with fallback download strategy
+- Moodle source code included directly in repository (COPY approach)
+- Build process copies complete Moodle 5.1 STABLE codebase into Docker image
+- Eliminates network dependencies and download failures during build
 
 ### Fixed
 - XML extensions now included via moodlehq base image
@@ -225,10 +223,9 @@ ENV MOODLE_FALLBACK="gs://sms-edu-47-backups/moodle/moodle-5.1-stable.tgz"
 - MySQL 8.0 (Cloud SQL)
 
 **Build Tools**:
-- wget/curl (Moodle download)
-- gsutil (Cloud Storage fallback)
-- tar (extraction)
-- Composer (dependency management)
+- Git and unzip (Composer installation)
+- Composer (PHP dependency management)
+- curl (health checks)
 
 ### System Requirements
 
@@ -236,8 +233,8 @@ ENV MOODLE_FALLBACK="gs://sms-edu-47-backups/moodle/moodle-5.1-stable.tgz"
 - Google Cloud Run (serverless)
 - Cloud SQL MySQL 8.0+
 - Cloud Storage bucket
-- 1Gi RAM minimum
-- 1 vCPU minimum
+- 2Gi RAM minimum
+- 2 vCPU minimum
 - HTTPS required
 
 **Browser Compatibility**:
@@ -286,7 +283,7 @@ ENV MOODLE_FALLBACK="gs://sms-edu-47-backups/moodle/moodle-5.1-stable.tgz"
 
 | Version | Date | Moodle Version | Type | Description |
 |---------|------|----------------|------|-------------|
-| 1.0.0 | 2025-01-13 | 5.1dev+ | Major | Initial production release, golden template |
+| 1.0.0 | 2025-01-13 | 5.1 STABLE | Major | Initial production release, golden template |
 
 ---
 
@@ -302,20 +299,25 @@ ENV MOODLE_FALLBACK="gs://sms-edu-47-backups/moodle/moodle-5.1-stable.tgz"
 
 ### Moodle Core Updates
 
-**Automatic (Minor)**: 5.1.x → 5.1.y
-```bash
-# Just redeploy - fetches latest 5.1.x
-gcloud builds submit --config cloudbuild.yaml
-```
-
-**Manual (Major)**: 5.1 → 5.2
+**Minor Updates** (5.1.0 → 5.1.1 → 5.1.2):
 1. Backup database and /moodledata
-2. Test in staging environment
-3. Update `MOODLE_VERSION` in Dockerfile
-4. Update fallback tgz in Cloud Storage
-5. Deploy to production
-6. Run Moodle upgrade wizard
-7. Verify all functionality
+2. Pull updated Moodle source from MOODLE_501_STABLE branch
+3. Replace local moodle-main/public/ directory with new version
+4. Test locally if possible
+5. Commit changes to repository
+6. Deploy: `gcloud builds submit --config cloudbuild.yaml`
+7. Moodle will auto-detect version change and run upgrade wizard
+
+**Major Updates** (5.1 → 5.2):
+1. Backup database and /moodledata
+2. Clone new Moodle version (e.g., MOODLE_502_STABLE branch)
+3. Test extensively in staging environment
+4. Replace local moodle-main/public/ directory with new version
+5. Update version references in Dockerfile and documentation
+6. Commit changes to repository
+7. Deploy to production: `gcloud builds submit --config cloudbuild.yaml`
+8. Run Moodle upgrade wizard
+9. Verify all functionality and plugins compatibility
 
 ---
 
@@ -335,4 +337,4 @@ gcloud builds submit --config cloudbuild.yaml
 
 **Note**: This is the initial production release. Future versions will follow semantic versioning as documented in VERSIONING.md.
 
-**Version Pinning**: Configuration v1.0.0 deploys Moodle 5.1dev+ (stable51 branch). Minor Moodle updates applied automatically via version pinning strategy.
+**Version Control**: Configuration v1.0.0 deploys Moodle 5.1 STABLE (Build: 20251006) from MOODLE_501_STABLE branch. Moodle source code is version-controlled in this repository. Updates require manual source replacement and redeployment.

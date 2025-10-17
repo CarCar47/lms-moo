@@ -1,6 +1,6 @@
 # COR4EDU Moodle LMS
 
-Moodle 5.1 Learning Management System configured for Google Cloud Run with ultra-low-cost deployment.
+Moodle 5.1 STABLE Learning Management System configured for Google Cloud Run with ultra-low-cost deployment.
 
 ## Overview
 
@@ -8,12 +8,12 @@ This repository contains the cloud-native configuration for deploying Moodle LMS
 
 ## Key Features
 
-### Moodle 5.1
+### Moodle 5.1 STABLE
 - Official Moodle HQ base image (moodlehq/moodle-php-apache:8.2)
 - All required PHP extensions pre-compiled
 - Attendance plugin pre-installed
-- Version pinning to stable51 branch (auto-patches, no breaking changes)
-- Download fallback to Cloud Storage
+- Complete Moodle 5.1 STABLE source code included (Build: 20251006)
+- No download dependencies - source code version-controlled in repository
 
 ### Cloud Infrastructure
 - **Cloud Run**: Serverless, auto-scaling (0-10 instances)
@@ -69,7 +69,7 @@ See [DEPLOYMENT.md](DEPLOYMENT.md) for detailed instructions.
 ### Directory Structure
 ```
 moodle-main/
-├── Dockerfile              # Container image with Moodle download
+├── Dockerfile              # Container image with Moodle source code
 ├── cloudbuild.yaml         # Cloud Build CI/CD pipeline
 ├── .dockerignore           # Docker build exclusions
 ├── .gcloudignore           # Cloud Build exclusions
@@ -85,27 +85,35 @@ moodle-main/
 └── config.php.template     # Configuration template
 ```
 
-### Moodle Version Pinning
+### Moodle Version Control
 
-**Strategy**: Lock to Moodle 5.1 stable branch
+**Strategy**: Source code version-controlled in repository
 
-```dockerfile
-ENV MOODLE_VERSION=51
-ENV MOODLE_URL="https://download.moodle.org/download.php/direct/stable51/moodle-latest-51.tgz"
-ENV MOODLE_FALLBACK="gs://sms-edu-47-backups/moodle/moodle-5.1-stable.tgz"
-```
+The complete Moodle 5.1 STABLE codebase (Build: 20251006) is included in this repository. The Docker build process uses `COPY` to include the source code directly in the container image.
 
 **Benefits:**
-- Gets security patches automatically (5.1.0 → 5.1.1 → 5.1.2)
-- Never jumps major versions (5.1 → 5.2 won't happen)
-- Fallback ensures builds work if download.moodle.org is down
+- No download failures during build
+- Consistent deployments (same source code every time)
+- Version-controlled Moodle source alongside configuration
+- No network dependencies during build
+
+**Updating Moodle (5.1.x security patches):**
+1. Backup database and /moodledata
+2. Pull updated source from official MOODLE_501_STABLE branch
+3. Replace local `moodle-main/public/` directory
+4. Test in staging environment
+5. Commit changes to repository
+6. Deploy: `gcloud builds submit --config cloudbuild.yaml`
 
 **Upgrading to 5.2:**
-1. Test in staging environment
-2. Update `MOODLE_VERSION=52` in Dockerfile
-3. Update fallback tgz in Cloud Storage
-4. Deploy and test thoroughly
-5. Roll out to production schools
+1. Backup database and /moodledata
+2. Clone Moodle 5.2 STABLE branch
+3. Test extensively in staging environment
+4. Replace local `moodle-main/public/` directory
+5. Update version references in Dockerfile and documentation
+6. Commit changes to repository
+7. Deploy and run Moodle upgrade wizard
+8. Test thoroughly before production rollout
 
 ## Configuration
 
@@ -194,8 +202,8 @@ Pre-installed attendance plugin at `public/mod/attendance/`:
 ### Current Configuration
 - **Min instances**: 0 (cold starts enabled, save $$$)
 - **Max instances**: 5 (scales automatically)
-- **Memory**: 1Gi (sufficient for 10-100 concurrent users)
-- **CPU**: 1 vCPU
+- **Memory**: 2Gi (optimized for responsive page rendering)
+- **CPU**: 2 vCPU (improved navigation speed)
 - **Database**: Shared Cloud SQL instance with SMS
 
 ### Estimated Costs
@@ -303,11 +311,25 @@ See [DEPLOYMENT.md](DEPLOYMENT.md) for detailed troubleshooting.
 
 ## Updating Moodle
 
-### Minor Updates (5.1.x → 5.1.y)
+### Minor Updates (5.1.0 → 5.1.1 → 5.1.2)
 
-Automatic via version pinning. Just redeploy:
+Manual source code update required:
 
 ```bash
+# 1. Backup first
+gcloud sql backups create --instance=sms-edu-db
+
+# 2. Pull updated Moodle 5.1.x source
+cd /tmp
+git clone --branch MOODLE_501_STABLE --depth 1 https://github.com/moodle/moodle.git
+
+# 3. Replace local public/ directory
+rm -rf moodle-main/public/*
+cp -r /tmp/moodle/* moodle-main/public/
+
+# 4. Commit and deploy
+git add moodle-main/public/
+git commit -m "Update Moodle to 5.1.x security patch"
 gcloud builds submit --config cloudbuild.yaml
 ```
 
@@ -315,10 +337,12 @@ gcloud builds submit --config cloudbuild.yaml
 
 1. **Backup database** first
 2. Test in staging environment
-3. Update `MOODLE_VERSION` in Dockerfile
-4. Update fallback tgz in Cloud Storage
-5. Deploy and run Moodle upgrade
-6. Test thoroughly before production rollout
+3. Clone Moodle 5.2 STABLE branch
+4. Replace local `moodle-main/public/` directory
+5. Update version references in Dockerfile and documentation
+6. Commit changes to repository
+7. Deploy and run Moodle upgrade wizard
+8. Test thoroughly before production rollout
 
 ## Documentation
 
@@ -355,6 +379,6 @@ gcloud builds submit --config cloudbuild.yaml
 ---
 
 **Version**: 1.0.0
-**Moodle Version**: 5.1 (stable branch)
+**Moodle Version**: 5.1 STABLE (Build: 20251006)
 **Last Updated**: 2025-01-13
 **Status**: Production Ready
